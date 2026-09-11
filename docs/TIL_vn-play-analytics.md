@@ -207,3 +207,23 @@ Create Table: CREATE TABLE `choice_options` (
 1 row in set (0.00 sec)
 
 ===
+
+---- lv2 ----
+
+[1] ChapterRepository, EpisodeRepository, ChoiceOptionRepository 작성
+- JpaRepository<Chapter, Long>
+- 본문에 직접 구현하지 않더라도 메서드가 상속됨
+ save(chapter);
+ findById(id);
+ findAll();
+ existsById(id);
+ deleteById(id);
+
+- boolean existsByCode(String code);
+ Spring Data JPA가 메서드 이름을 해석해 구현
+   개념적으로: WHERE code = ?
+
+
+- Chapter, Episode, ChoiceOption이 모두 들어오지만, 현재는 cascade를 사용하지 않기로 함.
+ 따라서 서비스에서는 Chapter 저장 -> Episode 저장 -> ChoiceOption으로 순서대로 저장.
+  외래키를 가진 자식은 부모가 먼저 존재해야 하기 때문.
