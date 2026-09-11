@@ -1,5 +1,16 @@
-package com.vnanalytics.content;
+package com.vnanalytics.content.service;
 
+import com.vnanalytics.content.exception.ChapterKeyConflictException;
+import com.vnanalytics.content.exception.ContentValidationException;
+import com.vnanalytics.content.dto.CreateChapterRequest;
+import com.vnanalytics.content.dto.CreateChoiceOptionRequest;
+import com.vnanalytics.content.dto.CreateEpisodeRequest;
+import com.vnanalytics.content.entity.Chapter;
+import com.vnanalytics.content.entity.ChoiceOption;
+import com.vnanalytics.content.entity.Episode;
+import com.vnanalytics.content.repository.ChapterRepository;
+import com.vnanalytics.content.repository.ChoiceOptionRepository;
+import com.vnanalytics.content.repository.EpisodeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

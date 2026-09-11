@@ -1,4 +1,4 @@
-package com.vnanalytics.content;
+package com.vnanalytics.content.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

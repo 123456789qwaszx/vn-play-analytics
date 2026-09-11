@@ -1,4 +1,4 @@
-package com.vnanalytics.content;
+package com.vnanalytics.content.exception;
 
 public class ChapterKeyConflictException extends RuntimeException {
 

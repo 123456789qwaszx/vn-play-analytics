@@ -1,4 +1,4 @@
-package com.vnanalytics.content;
+package com.vnanalytics.content.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
