@@ -130,6 +130,64 @@ nullable = false	        NOT NULL
 length = 50	                varchar(50)
 @UniqueConstraint	        중복 code를 막는 유니크 키
 
+===
+
+---- lv1.1 ----
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "chapter_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_episode_chapter")
+    )
+    private Chapter chapter;
+
+[1] Episode 작성
+
+1) @ManyToOne(fetch = FetchType.LAZY, optional = false)
+- 여러개의 Episode가 하나의 Chapter에 속한다는 뜻.
+- Episode 입장에서는 그저 Chapter 하나를 참조함.
+
+- fetch = FetchType.LAZY는 Episode를 조회할 때 연관된 Chapter를 항상 즉시 조회하지 않도록 명시한 것
+
+- optional = false는 JPA 객체 관계에서 “Chapter 없는 Episode는 허용하지 않는다”는 뜻
+
+
+2) @JoinColumn(name = "chapter_id", nullable = false)
+- episodes 테이블에 chapter_id 외래 키 열을 만든다.
+- nullable = false는 DB 열에도 NOT NULL 제약 적용.
+
+3) 복합 유니크 제약:
+columnNames = {"chapter_id", "code"}
+
+- 에피소드 코드는 전체 시스템에서 유일할 필요는 없고, 같은 챕터 안에서만 유일하면 됨.
+
+```powershell
+docker exec -it vn-analytics-mysql mysql -uvn_app -p vn_analytics
+```
+
+```sql
+SHOW CREATE TABLE episodes\G
+```
+*************************** 1. row ***************************
+       Table: episodes
+Create Table: CREATE TABLE `episodes` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `chapter_id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_episode_chapter_code` (`chapter_id`,`code`),
+  CONSTRAINT `fk_episode_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+1 row in set (0.00 sec)
+
+UNIQUE (chapter_id, code):
+ UNIQUE는 같은 챕터 안에서 에피소드 코드가 중복되는 것을 막습니다.
+
+FOREIGN KEY (chapter_id) REFERENCES chapters(id):
+ FOREIGN KEY는 존재하지 않는 챕터를 참조하는 에피소드가 저장되는 것을 막습니다.
+
 
 
 ===
