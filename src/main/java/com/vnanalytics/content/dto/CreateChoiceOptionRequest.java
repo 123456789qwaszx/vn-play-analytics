@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Size;
 
 public record CreateChoiceOptionRequest(
 
-        @NotNull
-        @PositiveOrZero
+        @NotNull(message = "선택지 순번은 필수입니다.")
+        @PositiveOrZero(message = "선택지 순번은 0 이상이어야 합니다.")
         Integer optionIndex,
 
         @NotBlank
