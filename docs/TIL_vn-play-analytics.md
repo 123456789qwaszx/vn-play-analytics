@@ -227,3 +227,58 @@ Create Table: CREATE TABLE `choice_options` (
 - Chapter, Episode, ChoiceOption이 모두 들어오지만, 현재는 cascade를 사용하지 않기로 함.
  따라서 서비스에서는 Chapter 저장 -> Episode 저장 -> ChoiceOption으로 순서대로 저장.
   외래키를 가진 자식은 부모가 먼저 존재해야 하기 때문.
+
+===
+
+---- lv2.1 ----
+
+[0]
+	       null     ""      " "    적용 대상
+1) @NotNull	✗	통과	통과	모든 타입
+2) @NotEmpty	✗	✗      통과    String, 컬렉션, 배열, Map
+3) @NotBlank	✗	✗	✗     String만
+
+4) @Valid
+- 검증을 중첩 객체 안쪽까지 전파
+
+@Valid @NotNull List<LessonRequest> lessons
+ @NotNull → 리스트 자체가 null이 아닌지만 검사
+ @Valid → 리스트 안의 각 LessonRequest 를 열어서 그 안의 @NotBlank 들까지 검사
+
+- @Valid 의 두 가지 동작
+ 이게 진짜 헷갈리는 부분인데, 같은 애노테이션이 위치에 따라 다른 일을 함
+
+@PostMapping("/chapters")
+public ResponseEntity<Void> create(
+        @Valid @RequestBody ChapterCreateRequest request) {   // ← 검증 "시작"}
+
+컨트롤러 파라미터의 @Valid 는 "이 객체 검증을 지금 실행해라"는 방아쇠고,  
+필드의 @Valid 는 "안쪽까지 내려가라"는 전파임.
+
+- 그래서 컨트롤러에 @Valid 를 안 붙이면 DTO에 애노테이션을 아무리 달아놔도 전부 무시됨.  
+- 검증이 안 되는데 원인을 못 찾는 경우 열에 아홉이 이거.
+
+@NotBlank(message = "챕터 코드는 필수입니다")
+@Size(max = 50, message = "챕터 코드는 50자를 넘을 수 없습니다")
+String code
+
+검증에 걸리면 MethodArgumentNotValidException 이 터지고 기본적으로 400이 나가는데,    @RestControllerAdvice 로 잡아서 응답 형식을 다듬는 게 일반적.
+
+
+[1] Request 작성
+
+- 이번 DTO 검증으로
+@NotBlank(문자열이 비었는가)
+@Size(문자열이 너무 긴가)
+@NotEmpty(Episode가 하나 이상인가)
+@Size(선택지가 두 개 이상인가)
+@PositiveOrZero(선택지 번호가 음수인가)
+
+하지만, 다음 중복 검사는 어노테이션만으로 간단하게 처리가 안되는 종류
+- 요청 안에서 Episode code가 중복되는가
+- 같은 Episode 안에서 optionIndex가 중복되는가
+- 이미 DB에 같은 Chapter code가 있는가
+
+이 세 가지는 ContentService에서 감시.
+
+===
