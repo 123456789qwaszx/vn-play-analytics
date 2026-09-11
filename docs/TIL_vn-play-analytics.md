@@ -142,7 +142,7 @@ length = 50	                varchar(50)
     )
     private Chapter chapter;
 
-[1] Episode 작성
+[3] Episode 작성
 
 1) @ManyToOne(fetch = FetchType.LAZY, optional = false)
 - 여러개의 Episode가 하나의 Chapter에 속한다는 뜻.
@@ -188,6 +188,22 @@ UNIQUE (chapter_id, code):
 FOREIGN KEY (chapter_id) REFERENCES chapters(id):
  FOREIGN KEY는 존재하지 않는 챕터를 참조하는 에피소드가 저장되는 것을 막습니다.
 
+[4] ChoiceOption 작성
 
+```sql
+SHOW CREATE TABLE choice_options\G
+```
+*************************** 1. row ***************************
+       Table: choice_options
+Create Table: CREATE TABLE `choice_options` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `label` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `option_index` int NOT NULL,
+  `episode_id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_choice_option_episode_index` (`episode_id`,`option_index`),
+  CONSTRAINT `fk_choice_option_episode` FOREIGN KEY (`episode_id`) REFERENCES `episodes` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+1 row in set (0.00 sec)
 
 ===

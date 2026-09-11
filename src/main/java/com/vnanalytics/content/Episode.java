@@ -32,6 +32,9 @@ public class Episode {
     @Column(nullable = false, length = 100)
     private String title;
 
+    protected Episode() {
+    }
+
     public Episode(Chapter chapter, String code, String title) {
         this.chapter = chapter;
         this.code = code;
