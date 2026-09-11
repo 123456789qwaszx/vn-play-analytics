@@ -1,10 +1,8 @@
 package com.vnanalytics.content.service;
 
+import com.vnanalytics.content.dto.*;
 import com.vnanalytics.content.exception.ChapterKeyConflictException;
 import com.vnanalytics.content.exception.ContentValidationException;
-import com.vnanalytics.content.dto.CreateChapterRequest;
-import com.vnanalytics.content.dto.CreateChoiceOptionRequest;
-import com.vnanalytics.content.dto.CreateEpisodeRequest;
 import com.vnanalytics.content.entity.Chapter;
 import com.vnanalytics.content.entity.ChoiceOption;
 import com.vnanalytics.content.entity.Episode;
@@ -34,6 +32,49 @@ public class ContentService {
         this.chapterRepository = chapterRepository;
         this.episodeRepository = episodeRepository;
         this.choiceOptionRepository = choiceOptionRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public ChapterDetailResponse getChapter(Long chapterId) {
+
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() ->
+                        new ContentValidationException(
+                                "챕터를 찾을 수 없습니다: " + chapterId
+                        )
+                );
+
+        List<EpisodeResponse> episodes = episodeRepository
+                .findAllByChapterOrderByIdAsc(chapter)
+                .stream()
+                .map(episode -> {
+                    List<ChoiceOptionResponse> options = choiceOptionRepository
+                            .findAllByEpisodeOrderByOptionIndexAsc(episode)
+                            .stream()
+                            .map(option ->
+                                    new ChoiceOptionResponse(
+                                            option.getOptionIndex(),
+                                            option.getLabel(),
+                                            option.isAuto()
+                                    )
+                            )
+                            .toList();
+
+                    return new EpisodeResponse(
+                            episode.getId(),
+                            episode.getEpisodeKey(),
+                            episode.getTitle(),
+                            options
+                    );
+                })
+                .toList();
+
+        return new ChapterDetailResponse(
+                chapter.getId(),
+                chapter.getChapterKey(),
+                chapter.getTitle(),
+                episodes
+        );
     }
 
     @Transactional

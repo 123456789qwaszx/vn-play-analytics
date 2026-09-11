@@ -562,3 +562,90 @@ episodes ↔ choice_options 외래키 관계가 그림으로 나와서 구조 �
 3,복도로 (장면 나감),0,2,false
 4,"복도로 (Via 있음, 장면 나감)",0,3,false
 5,"",0,4,true
+
+===
+
+---- lv5 ----
+
+[1] ResponseDTO 작성
+
+[2] getChapterAPI 작성
+
+[3] 테스트
+
+1) DB 상세조회
+요청
+```
+GET http://localhost:8080/chapters/1
+```
+
+응답 '200 ok'
+```json
+{
+    "chapterId": 1,
+    "chapterKey": "qwer_scene",
+    "title": "qwer (장면 묶음 테스트)",
+    "episodes": [
+        {
+            "episodeId": 1,
+            "episodeKey": "EP01",
+            "title": "사무실 - 도착",
+            "options": [
+                {
+                    "optionIndex": 0,
+                    "label": "성실하게 (Via 있음, 같은 장면)",
+                    "auto": false
+                },
+                {
+                    "optionIndex": 1,
+                    "label": "요령있게 (Via 없음, 같은 장면)",
+                    "auto": false
+                }
+            ]
+        },
+        {
+            "episodeId": 2,
+            "episodeKey": "EP02_01",
+            "title": "사무실 - 성실 루트",
+            "options": [
+                {
+                    "optionIndex": 0,
+                    "label": "복도로 (장면 나감)",
+                    "auto": false
+                }
+            ]
+        },
+        {
+            "episodeId": 3,
+            "episodeKey": "EP02_02",
+            "title": "사무실 - 요령 루트",
+            "options": [
+                {
+                    "optionIndex": 0,
+                    "label": "복도로 (Via 있음, 장면 나감)",
+                    "auto": false
+                }
+            ]
+        },
+        {
+            "episodeId": 4,
+            "episodeKey": "EP03",
+            "title": "복도",
+            "options": [
+                {
+                    "optionIndex": 0,
+                    "label": "",
+                    "auto": true
+                }
+            ]
+        },
+        {
+            "episodeId": 5,
+            "episodeKey": "EP04",
+            "title": "복도 - 끝",
+            "options": []
+        }
+    ]
+}
+```
+
