@@ -35,6 +35,20 @@ public class ContentService {
         this.choiceOptionRepository = choiceOptionRepository;
     }
 
+    public List<ChapterSummaryResponse> findChapters(String chapterKey) {
+        return chapterRepository.findByChapterKey(chapterKey)
+                .map(chapter ->
+                        List.of(
+                                new ChapterSummaryResponse(
+                                        chapter.getId(),
+                                        chapter.getChapterKey(),
+                                        chapter.getTitle()
+                                )
+                        )
+                )
+                .orElseGet(List::of);
+    }
+
     @Transactional(readOnly = true)
     public ChapterDetailResponse getChapter(Long chapterId) {
 

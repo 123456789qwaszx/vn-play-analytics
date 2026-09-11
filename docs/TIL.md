@@ -649,3 +649,57 @@ GET http://localhost:8080/chapters/1
 }
 ```
 
+[2] 챕터 상세 작성
+
+[3] 챕터키 조회 추가
+- Optional<'Chapter> findByChapterKey(String chapterKey);
+
+GET /chapters/1
+→ 1번 Chapter의 상세 내용
+
+GET /chapters?chapterKey=qwer_scene
+→ qwer_scene이라는 Chapter를 검색
+
+- 이것의 못적은 이 콘텐츠가 서버에 등록되어 있는가?
+- 있다면 서버 PK가 몇 번인가? 를 묻는 것.
+
+[4] PK를 알아내는 이유
+- PK는 그 행에 도달하는 유일한 주소.
+- JPA가 즉시 알아야함.
+
+  영속성 컨텍스트(1차 캐시)는 사실 이런 구조. Map<식별자, 엔티티>
+  즉 키가 id.
+  
+  그렇기에 IDENTITY 전략에서 persist() 가 INSERT를 즉시 날리는 것처럼 id를 확보해야 가능함.
+- chapterKey는 유니크 제약으로 중복만 막고, 식별은 id가 맡는 구조.
+BIGINT는 8바이트인데, VARCHAR(50)은 최대 50바이트. 이게 FK로 여기저기 퍼지면 저장 공간도, 조인 비용도 몇 배가 됨.
+
+[5] 챕터 키 조회 API 작성
+
+1) ChapterKey 기반 chapter의 PK 획득 및 조회
+요청
+```
+http://localhost:8080/chapters?chapterKey=qwer_scene
+```
+
+응답
+``` 200 OK
+[
+    {
+        "chapterId": 1,
+        "chapterKey": "qwer_scene",
+        "title": "qwer (장면 묶음 테스트)"
+    }
+]
+```
+
+2) 없는 ChapterKey 빈 배열 반환 확인
+요청
+```
+http://localhost:8080/chapters?chapterKey=없는챕터
+```
+
+응답
+``` 200 OK
+[]
+```
