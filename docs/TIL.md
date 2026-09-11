@@ -341,3 +341,105 @@ Create Table: CREATE TABLE `choice_options` (
 1 row in set (0.00 sec)
 
 ===
+
+---- lv3 ----
+[1] service 작성
+
+[2] Controller 작성
+
+
+[3] URI란?
+URI location = URI.create("/chapters/" + chapterId);
+- URI:
+ 리소스의 위치를 나타내는 문자열을 구조화해서 다루는 Java 타입
+
+예를 들어 chapterId가 12라면:
+-> /chapters/12
+그런다음
+return ResponseEntity
+        .created(location)
+        .body(new CreateChapterResponse(chapterId));
+
+여기서 created(location)은 HTTP 상태를 201 Created로 만들고, 응답 헤더에 Location도 넣음.
+
+응답
+->
+HTTP/1.1 201 Created
+Location: /chapters/12
+Content-Type: application/json
+
+{
+  "chapterId": 12
+}
+
+즉 서버가 클라에게,
+새 Chapter를 만들었고, 그 리소스는 '/chapters/12' 에 뒀다고 알리는 것.
+
+URI
+→ 리소스를 식별하는 표현
+
+URL
+→ 그 리소스가 어디에 있고 어떻게 접근하는지 나타내는 URI의 한 종류
+
+- 지금 String이 아니라 URI를 쓰는 이유는,
+ResponseEntity.created의 인자가 애초에 URI이기 때문.
+개념적으로 ResponseEntity.created(URI location)
+
+그래서 .created("/chapters/" + chapterId) 
+ 이렇게 바로 넣는 건 불가능.
+
+대신,
+URI location = URI.create("/chapters/" + chapterId);
+ 이렇게 바꿔서 전달.
+
+
+즉 현재 흐름
+POST /chapters
+    ↓
+Chapter 생성
+    ↓
+ID = 12
+    ↓
+URI.create("/chapters/12")
+    ↓
+201 Created
+Location: /chapters/12
+
+
+[4] ResponseEntity란?
+ Spring에서 HTTP 응답 전체를 직접 구성할 때 사용하는 객체.
+
+- 응답 데이터뿐만이 아니라,  
+(1)상태 코드, (2)헤더, (3)본문 을 함게 다룰 수 있음.
+
+```
+return ResponseEntity
+        .created(location)
+        .body(new CreateChapterResponse(chapterId));
+ ```
+이걸 HTTP 응답으로 보면
+```
+HTTP/1.1 201 Created
+Location: /chapters/12
+Content-Type: application/json
+
+{
+  "chapterId": 12
+}
+```
+
+[5] 이렇게 ResponseEntity를 쓰는 이유는? DTO를 바로 반환 가능한데.
+@PostMapping
+public CreateChapterResponse createChapter(...) {
+    ...
+    return new CreateChapterResponse(chapterId);
+}
+
+이렇게 해도 '200 OK'와 JSON BODY를 받을 수 있지만,
+
+지금 객체를 생성한 것이기 때문에
+
+'200 OK' 보다는, '201 Created'를 주고 싶고, Location 헤더까지 넣고 싶기 때문.
+
+===
+
