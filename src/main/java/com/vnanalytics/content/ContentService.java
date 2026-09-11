@@ -25,33 +25,43 @@ public class ContentService {
     }
 
     @Transactional
-    public Long createChapter(CreateChapterRequest request) {
-        validateRequestDuplicates(request);
+    public Long createChapter(CreateChapterRequest chapterRequest) {
+        validateRequestDuplicates(chapterRequest);
 
-        if (chapterRepository.existsByCode(request.code())) {
-            throw new ChapterCodeConflictException(request.code());
+        if (chapterRepository.existsByChapterKey(
+                chapterRequest.chapterKey()
+        )) {
+            throw new ChapterKeyConflictException(
+                    chapterRequest.chapterKey()
+            );
         }
 
         Chapter chapter = chapterRepository.save(
-                new Chapter(request.code(), request.title())
+                new Chapter(
+                        chapterRequest.chapterKey(),
+                        chapterRequest.title()
+                )
         );
 
-        for (CreateEpisodeRequest episodeRequest : request.episodes()) {
+        for (CreateEpisodeRequest episodeRequest
+                : chapterRequest.episodes()) {
+
             Episode episode = episodeRepository.save(
                     new Episode(
                             chapter,
-                            episodeRequest.code(),
+                            episodeRequest.episodeKey(),
                             episodeRequest.title()
                     )
             );
 
-            List<ChoiceOption> options = episodeRequest.options().stream()
-                    .map(optionRequest -> new ChoiceOption(
-                            episode,
-                            optionRequest.optionIndex(),
-                            optionRequest.label()
-                    ))
-                    .toList();
+            List<ChoiceOption> options =
+                    episodeRequest.options().stream()
+                            .map(optionRequest -> new ChoiceOption(
+                                    episode,
+                                    optionRequest.optionIndex(),
+                                    optionRequest.label()
+                            ))
+                            .toList();
 
             choiceOptionRepository.saveAll(options);
         }
@@ -59,30 +69,39 @@ public class ContentService {
         return chapter.getId();
     }
 
-    private void validateRequestDuplicates(CreateChapterRequest request) {
-        Set<String> episodeCodes = new HashSet<>();
+    private void validateRequestDuplicates(
+            CreateChapterRequest chapterRequest
+    ) {
+        Set<String> episodeKeys = new HashSet<>();
 
-        for (CreateEpisodeRequest episode : request.episodes()) {
-            if (!episodeCodes.add(episode.code())) {
+        for (CreateEpisodeRequest episodeRequest
+                : chapterRequest.episodes()) {
+
+            if (!episodeKeys.add(episodeRequest.episodeKey())) {
                 throw new ContentValidationException(
-                        "요청 안에서 장면 코드가 중복됩니다: " + episode.code()
+                        "요청 안에서 장면 키가 중복됩니다: "
+                                + episodeRequest.episodeKey()
                 );
             }
 
-            validateOptionIndexes(episode);
+            validateOptionIndexes(episodeRequest);
         }
     }
 
-    private void validateOptionIndexes(CreateEpisodeRequest episode) {
+    private void validateOptionIndexes(
+            CreateEpisodeRequest episodeRequest
+    ) {
         Set<Integer> optionIndexes = new HashSet<>();
 
-        for (CreateChoiceOptionRequest option : episode.options()) {
-            if (!optionIndexes.add(option.optionIndex())) {
+        for (CreateChoiceOptionRequest optionRequest
+                : episodeRequest.options()) {
+
+            if (!optionIndexes.add(optionRequest.optionIndex())) {
                 throw new ContentValidationException(
                         "장면 '%s' 안에서 선택지 순번이 중복됩니다: %d"
                                 .formatted(
-                                        episode.code(),
-                                        option.optionIndex()
+                                        episodeRequest.episodeKey(),
+                                        optionRequest.optionIndex()
                                 )
                 );
             }

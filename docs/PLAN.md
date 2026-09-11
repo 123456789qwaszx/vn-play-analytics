@@ -1,4 +1,5 @@
-﻿# vn-play-analytics — PLAN
+﻿```
+# vn-play-analytics — PLAN
 
 작성일: 2026-09-11  
 상태: 구현 전 / v1  
@@ -69,11 +70,13 @@
 
 | 엔티티 / 테이블 | 주요 필드 | 관계·제약 |
 | --- | --- | --- |
-| Chapter / chapters | id, code, title | code UNIQUE, 비어 있지 않음 |
-| Episode / episodes | id, chapter_id, code, title | Chapter FK, UNIQUE(chapter_id, code) |
+| Chapter / chapters | id, chapterKey (`chapter_key`), title | chapterKey UNIQUE, 비어 있지 않음 |
+| Episode / episodes | id, chapter_id, episodeKey (`episode_key`), title | Chapter FK, UNIQUE(chapter_id, episode_key) |
 | ChoiceOption / choice_options | id, episode_id, option_index, label | Episode FK, UNIQUE(episode_id, option_index), 인덱스 0 이상 |
 | Playthrough / playthroughs | id, chapter_id, started_at, ended_at | Chapter FK, ended_at NULL이면 진행 중 |
 | ChoiceRecord / choice_records | id, playthrough_id, choice_option_id, recorded_at | Playthrough·ChoiceOption FK, 추가 기록 방식 |
+
+`chapterKey`와 `episodeKey`는 DB가 생성하는 숫자 `id`와 별개로 콘텐츠 작성자가 지정하는 식별 문자열이다. Java와 JSON에서는 camelCase를 사용하고, DB 열은 각각 `chapter_key`, `episode_key`로 저장한다. `chapterKey`는 전체 챕터에서 유일하고, `episodeKey`는 같은 챕터 안에서 유일하다.
 
 `ChoiceRecord`는 세이브 슬롯을 거치지 않고 회차에 직접 속한다. 선택지를 통해 장면과 챕터를 찾으므로 처음에는 그 ID를 기록 테이블에 중복 저장하지 않는다.
 
@@ -115,8 +118,8 @@
 
 M1의 등록 요청은 챕터 내부 장면 1개 이상, 각 장면의 선택지 2개 이상으로 제한한다. 첫 모델의 Episode는 선택이 발생하는 장면만 다룬다. 전체 VN 장면 종류를 표현하려 하지 않는다.
 
-- 등록 요청 내 중복 장면 code, 중복 optionIndex는 400으로 처리한다.
-- 이미 등록된 Chapter code와 충돌하면 409로 처리한다.
+- 등록 요청 내 중복 episodeKey, 중복 optionIndex는 400으로 처리한다.
+- 이미 등록된 chapterKey와 충돌하면 409로 처리한다.
 - 비어 있는 필수 문자열·잘못된 페이지 인자·다른 챕터의 선택지는 400이다.
 - 존재하지 않는 챕터·회차·선택지·장면은 404이다.
 - 종료 회차에 기록을 추가하면 409이다.
@@ -294,3 +297,5 @@ M1의 등록 요청은 챕터 내부 장면 1개 이상, 각 장면의 선택지
 - 단계가 끝나면 변경 내용·실행한 검증·남은 문제·다음 단계를 기록한다.
 - 공식 과제가 나오면 필수 기술과 본 계획을 비교하고 우선순위를 조정한다. 공식 과제에 이 프로젝트를 제출할 수 있다고 가정하지 않는다.
 - 다른 채팅에서 이어갈 때 이 PLAN, 현재 브랜치·커밋, 완료 단계, 최근 테스트 결과를 전달한다.
+
+```

@@ -7,8 +7,8 @@ import jakarta.persistence.*;
         name = "episodes",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_episode_chapter_code",
-                        columnNames = {"chapter_id", "code"}
+                        name = "uk_episode_chapter_key",
+                        columnNames = {"chapter_id", "episode_key"}
                 )
         }
 )
@@ -26,8 +26,8 @@ public class Episode {
     )
     private Chapter chapter;
 
-    @Column(nullable = false, length = 50)
-    private String code;
+    @Column(name = "episode_key", nullable = false, length = 50)
+    private String episodeKey;
 
     @Column(nullable = false, length = 100)
     private String title;
@@ -35,25 +35,17 @@ public class Episode {
     protected Episode() {
     }
 
-    public Episode(Chapter chapter, String code, String title) {
+    public Episode(
+            Chapter chapter,
+            String episodeKey,
+            String title
+    ) {
         this.chapter = chapter;
-        this.code = code;
+        this.episodeKey = episodeKey;
         this.title = title;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Chapter getChapter() {
-        return chapter;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getTitle() {
-        return title;
+    public String getEpisodeKey() {
+        return episodeKey;
     }
 }

@@ -281,4 +281,63 @@ String code
 
 이 세 가지는 ContentService에서 감시.
 
+
+[2] refactor: 콘텐츠 식별자 명칭 변경
+
+- Chapter.code → Chapter.chapterKey
+- Episode.code → Episode.episodeKey
+- 숫자 PK인 id와 콘텐츠 작성자가 지정한 식별 키를 구분하기 위해 변경
+- DB 컬럼도 code → chapter_key / episode_key로 재생성
+
+
+mysql> SHOW TABLES;
++------------------------+
+| Tables_in_vn_analytics |
++------------------------+
+| chapters               |
+| choice_options         |
+| episodes               |
++------------------------+
+3 rows in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE chapters\G
+*************************** 1. row ***************************
+       Table: chapters
+Create Table: CREATE TABLE `chapters` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `chapter_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_chapter_key` (`chapter_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+1 row in set (0.01 sec)
+
+mysql> SHOW CREATE TABLE episodes\G
+*************************** 1. row ***************************
+       Table: episodes
+Create Table: CREATE TABLE `episodes` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `episode_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `chapter_id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_episode_chapter_key` (`chapter_id`,`episode_key`),
+  CONSTRAINT `fk_episode_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+1 row in set (0.00 sec)
+
+mysql> SHOW CREATE TABLE choice_options\G
+*************************** 1. row ***************************
+       Table: choice_options
+Create Table: CREATE TABLE `choice_options` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `label` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `option_index` int NOT NULL,
+  `episode_id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_choice_option_episode_index` (`episode_id`,`option_index`),
+  CONSTRAINT `fk_choice_option_episode` FOREIGN KEY (`episode_id`) REFERENCES `episodes` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+1 row in set (0.00 sec)
+
 ===

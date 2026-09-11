@@ -13,8 +13,8 @@ import jakarta.persistence.UniqueConstraint;
         name = "chapters",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_chapter_code",
-                        columnNames = "code"
+                        name = "uk_chapter_key",
+                        columnNames = "chapter_key"
                 )
         }
 )
@@ -24,19 +24,17 @@ public class Chapter {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 50)
-    private String code;
+    @Column(name = "chapter_key", nullable = false, length = 50)
+    private String chapterKey;
 
     @Column(nullable = false, length = 100)
     private String title;
 
-    // JPA용
     protected Chapter() {
     }
 
-    // 애플리케이션이 새 챕터를 만드는 경로
-    public Chapter(String code, String title) {
-        this.code = code;
+    public Chapter(String chapterKey, String title) {
+        this.chapterKey = chapterKey;
         this.title = title;
     }
 
@@ -44,8 +42,8 @@ public class Chapter {
         return id;
     }
 
-    public String getCode() {
-        return code;
+    public String getChapterKey() {
+        return chapterKey;
     }
 
     public String getTitle() {

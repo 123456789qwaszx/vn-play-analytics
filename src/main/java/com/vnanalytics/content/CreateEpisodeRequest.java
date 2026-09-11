@@ -7,10 +7,10 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
-public record CreateEpisodeRequest (
+public record CreateEpisodeRequest(
         @NotBlank
         @Size(max = 50)
-        String code,
+        String episodeKey,
 
         @NotBlank
         @Size(max = 100)
@@ -20,5 +20,5 @@ public record CreateEpisodeRequest (
         @NotNull
         @Size(min = 2)
         List<CreateChoiceOptionRequest> options
-){
+) {
 }
