@@ -443,3 +443,122 @@ public CreateChapterResponse createChapter(...) {
 
 ===
 
+
+---- lv4 ----
+
+[1] 서버의 DTO 구조를 클라와 동기화
+
+[2] 테스트
+
+요청
+```http
+POST http://localhost:8080/chapters
+```
+```json
+{
+  "chapterKey": "qwer_scene",
+  "title": "qwer (장면 묶음 테스트)",
+  "episodes": [
+    {
+      "episodeKey": "EP01",
+      "title": "사무실 - 도착",
+      "options": [
+        {
+          "optionIndex": 0,
+          "label": "성실하게 (Via 있음, 같은 장면)",
+          "auto": false
+        },
+        {
+          "optionIndex": 1,
+          "label": "요령있게 (Via 없음, 같은 장면)",
+          "auto": false
+        }
+      ]
+    },
+    {
+      "episodeKey": "EP02_01",
+      "title": "사무실 - 성실 루트",
+      "options": [
+        {
+          "optionIndex": 0,
+          "label": "복도로 (장면 나감)",
+          "auto": false
+        }
+      ]
+    },
+    {
+      "episodeKey": "EP02_02",
+      "title": "사무실 - 요령 루트",
+      "options": [
+        {
+          "optionIndex": 0,
+          "label": "복도로 (Via 있음, 장면 나감)",
+          "auto": false
+        }
+      ]
+    },
+    {
+      "episodeKey": "EP03",
+      "title": "복도",
+      "options": [
+        {
+          "optionIndex": 0,
+          "label": "",
+          "auto": true
+        }
+      ]
+    },
+    {
+      "episodeKey": "EP04",
+      "title": "복도 - 끝",
+      "options": []
+    }
+  ]
+}
+```
+
+
+응답 '201 Created'
+```json
+{
+    "chapterId": 1
+}
+```
+
+- 서버용 가공 데이터를 임의로 만든 것이 아니라 Unity NextOptions를 그대로 카탈로그화한 것
+- 실제 콘텐츠 POST 등록은 성공
+
+ContentController → @Valid → ContentService → Chapter 저장 → Episode 저장 → ChoiceOption 저장 → 트랜잭션 commit → 201 응답
+
+[3] Intellij DB 스키마 연결
+
+쿼리 콘솔 열기 - 데이터 소스 선택하고 Ctrl + Shift + Q.  
+실행은 Ctrl + Enter.  
+여기선 USE 안 써도 되고, 콘솔 상단 드롭다운에서 스키마를 고르면 됨.
+
+테이블 더블클릭 - 데이터가 바로 그리드로 열림.
+셀을 직접 수정하고 Ctrl+Enter 로 반영할 수도 있음.
+
+ER 다이어그램 - 테이블 여러 개 선택 후 Ctrl + Alt + Shift + U.  
+episodes ↔ choice_options 외래키 관계가 그림으로 나와서 구조 확인할 때 좋음.
+
+@Query 안의 SQL을 검사해준다는 장점도 있음.
+
+[4] MYSQL 확인
+
+1) chapters
+1,qwer_scene,qwer (장면 묶음 테스트)
+
+2) episodes
+1,EP01,사무실 - 도착,1
+2,EP02_01,사무실 - 성실 루트,1
+3,EP02_02,사무실 - 요령 루트,1
+4,EP03,복도,1
+5,EP04,복도 - 끝,1
+
+3) choice_options
+1,"성실하게 (Via 있음, 같은 장면)",0,1,false
+2,"요령있게 (Via 없음, 같은 장면)",1,1,false
+3,복도로 (장면 나감),0,2,false
+4,"복도로 (Via 있음, 장면 나감)",0,3,false
+5,"",0,4,true

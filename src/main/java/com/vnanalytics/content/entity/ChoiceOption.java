@@ -42,13 +42,22 @@ public class ChoiceOption {
     @Column(nullable = false, length = 200)
     private String label;
 
+    @Column(name = "is_auto", nullable = false)
+    private boolean auto;
+
     protected ChoiceOption() {
     }
 
-    public ChoiceOption(Episode episode, Integer optionIndex, String label) {
+    public ChoiceOption(
+            Episode episode,
+            Integer optionIndex,
+            String label,
+            boolean auto
+    ) {
         this.episode = episode;
         this.optionIndex = optionIndex;
         this.label = label;
+        this.auto = auto;
     }
 
     public Long getId() {
@@ -65,5 +74,9 @@ public class ChoiceOption {
 
     public String getLabel() {
         return label;
+    }
+
+    public boolean isAuto() {
+        return auto;
     }
 }

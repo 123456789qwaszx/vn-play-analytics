@@ -40,6 +40,7 @@ public class ContentService {
     public Long createChapter(CreateChapterRequest chapterRequest) {
         // 요청 내부 중복 검사
         validateRequestDuplicates(chapterRequest);
+        validateOptionLabels(chapterRequest);
 
         // DB에 같은 ChapterKey가 있는지 충돌 검사
         if (chapterRepository.existsByChapterKey(chapterRequest.chapterKey()))
@@ -47,23 +48,36 @@ public class ContentService {
 
         // Chapter 저장. DTO에서 받은 값을 Entity로 옮김.
         // 저장 후에는 chapter 객체에 DB가 만든 ID가 들어감.
-        Chapter chapter = chapterRepository.save(
-                new Chapter(chapterRequest.chapterKey(), chapterRequest.title())
+        Chapter chapter =
+                chapterRepository.save(
+                        new Chapter(
+                                chapterRequest.chapterKey(),
+                                chapterRequest.title()
+                        )
         );
 
         // Episode를 하나씩 저장.
         for (CreateEpisodeRequest episodeRequest : chapterRequest.episodes()) {
-            Episode episode = episodeRepository.save(
-                    new Episode(chapter, episodeRequest.episodeKey(), episodeRequest.title())
-            );
+            Episode episode =
+                    episodeRepository.save(
+                            new Episode(
+                                    chapter,
+                                    episodeRequest.episodeKey(),
+                                    episodeRequest.title()
+                            )
+                    );
 
             // CreateChoiceOptionRequest를 ChoiceOption으로 변환.
             List<ChoiceOption> options = new ArrayList<>();
 
             for (CreateChoiceOptionRequest optionRequest : episodeRequest.options()) {
                 ChoiceOption option =
-                        new ChoiceOption(episode, optionRequest.optionIndex(), optionRequest.label()
-                );
+                        new ChoiceOption(
+                                episode,
+                                optionRequest.optionIndex(),
+                                optionRequest.label(),
+                                optionRequest.auto()
+                        );
 
                 options.add(option);
             }
@@ -91,6 +105,22 @@ public class ContentService {
         for (CreateChoiceOptionRequest option : episode.options()) {
             if (!seenOptionIndexes.add(option.optionIndex()))
                 throw new ContentValidationException("장면 '%s' 안에서 선택지 순번이 중복됩니다: %d".formatted(episode.episodeKey(), option.optionIndex()));
+        }
+    }
+
+    private void validateOptionLabels(CreateChapterRequest chapter) {
+        for (CreateEpisodeRequest episode : chapter.episodes()) {
+            for (CreateChoiceOptionRequest option : episode.options()) {
+                if (!option.auto() && option.label().isBlank()) {
+                    throw new ContentValidationException(
+                            "에피소드 '%s'의 사용자 선택지 문구는 비어 있을 수 없습니다: %d"
+                                    .formatted(
+                                            episode.episodeKey(),
+                                            option.optionIndex()
+                                    )
+                    );
+                }
+            }
         }
     }
 }

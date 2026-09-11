@@ -16,9 +16,7 @@ public record CreateEpisodeRequest(
         @Size(max = 100)
         String title,
 
-        @Valid
-        @NotNull
-        @Size(min = 2)
-        List<CreateChoiceOptionRequest> options
+        @NotNull(message = "선택지 목록은 필수입니다.")
+        List<@NotNull @Valid CreateChoiceOptionRequest> options
 ) {
 }
