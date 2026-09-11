@@ -10,6 +10,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ChapterNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleChapterNotFound(
+            ChapterNotFoundException e
+    ) {
+        return buildErrorResponse(
+                ErrorCode.CHAPTER_NOT_FOUND,
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(ContentValidationException.class)
     public ResponseEntity<ErrorResponse> handleContentValidation(
             ContentValidationException e

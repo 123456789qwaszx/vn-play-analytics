@@ -6,7 +6,8 @@ public enum ErrorCode {
 
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST),
     INVALID_CONTENT(HttpStatus.BAD_REQUEST),
-    CHAPTER_KEY_CONFLICT(HttpStatus.CONFLICT);
+    CHAPTER_KEY_CONFLICT(HttpStatus.CONFLICT),
+    CHAPTER_NOT_FOUND(HttpStatus.NOT_FOUND);
 
     private final HttpStatus httpStatus;
 

@@ -1,5 +1,6 @@
 package com.vnanalytics.content.service;
 
+import com.vnanalytics.common.exception.ChapterNotFoundException;
 import com.vnanalytics.content.dto.*;
 import com.vnanalytics.content.exception.ChapterKeyConflictException;
 import com.vnanalytics.content.exception.ContentValidationException;
@@ -38,11 +39,7 @@ public class ContentService {
     public ChapterDetailResponse getChapter(Long chapterId) {
 
         Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() ->
-                        new ContentValidationException(
-                                "챕터를 찾을 수 없습니다: " + chapterId
-                        )
-                );
+                .orElseThrow(() -> new ChapterNotFoundException(chapterId));
 
         List<EpisodeResponse> episodes = episodeRepository
                 .findAllByChapterOrderByIdAsc(chapter)
