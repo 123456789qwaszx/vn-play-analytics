@@ -1622,3 +1622,118 @@ UnityEngine.Debug:Log (object)
 
 - 롤백 등에서도 localsnap샷 기준이기에 임시 상태와 분리됨을 확인함
 (이것은 클라측 정책 신뢰하기로 결정함)
+
+===
+
+---- lv11 ----
+
+[1] 현재 상황
+ 클라 기준으로는 LocalSaveFile에 선택 이력을 넣어뒀지만,
+ 서버 입장에서는 snapshotJson일 뿐임.
+
+따라서 EP01에서 몇 번 선택지를 골랐는지,
+0번과 1번 선택의 비율 같은 질문을 SQL로 바로 할 수 없음.
+
+[2] 따라서 선택하나를 Playthrough에서 분리하여
+ChoiceRecord라는 서버의 명시적 데이터로 분리해야한다.
+
+[3] append vs replacement
+
+1) Append / Event 방식 :
+ 선택이 일어날 때마다 서버에 하나씩 추가
+ 서버 관점에서는 일종의 로그
+ 이미 기록된 데이터를 수정하지 않고, 계속 뒤에 붙임.
+
+장점:
+ 역사가 남음
+ 모델링만 잘 하면, 서버가 모든 사건을 알 수 있기에 분석 시스템에 강력함.
+
+
+2) Replacement : 현재 이 회차의 확정된 선택 기록들
+ 무슨 일이 있었는 지가 아니라,
+ 현재 회차에서 확정된 선택 경로가 무엇인가?
+ 체크포인트에서 이전 변경기록을 유지 하지 않고, 최신 checkpoint 하나만 유지한 것과 동일.
+
+[4] ChoiceRecord 작성
+
+1. 처음 보면
+`
+ChoiceRecord
+- id
+- playthroughId
+- chapterKey
+- episodeKey
+- optionIndex
+- chosenAt
+- seq
+` 
+이것들 모두 필요하다고 생각 할 수 있으나,
+
+`
+2. ChoiceRecord
+- id
+- playthrough
+- choiceOption
+`
+이거면 충분함
+
+3. 관계로 보면,
+Playthrough
+     │
+     └── ChoiceRecord ──> ChoiceOption
+                            │
+                            └── Episode
+                                  │
+                                  └── Chapter
+
+4. 이게 가능한 것은,
+서버에 이미 Episode, ChoiceOption이라는 컨텐츠 데이터가 있기 때문.
+
+클라측에서 이정도만 보내더라도,
+{
+  "episodeKey": "EP01",
+  "optionIndex": 0
+}
+
+EP01
+ +
+option 0
+ ↓
+서버의 실제 ChoiceOption 찾기
+ ↓
+ChoiceRecord에 FK 저장
+하면 되고,
+
+이렇게 하면 DB에 존재하지 않는 선택을 저장하는 실수도 방지 가능함.
+
+chapterKey역시
+→ Playthrough
+→ Chapter
+
+혹은,
+→ ChoiceOption
+→ Episode
+→ Chapter
+
+알 방법이 많음.
+ 
+
+[5] 흐름
+기존 ChoiceRecord 전부 제거
+        ↓
+요청받은 선택 검증
+        ↓
+현재 ChoiceRecord 집합 생성
+
+- Checkpoint는 “이어하기 위한 전체 상태”를 저장하고,  
+ ChoiceRecord는 “통계에 사용할 현재 확정 선택”을 정규화해서 저장.
+
+[6] ChoiceRecord 작성
+
+
+
+
+
+
+
+

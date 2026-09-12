@@ -34,7 +34,7 @@ public class CheckpointService {
         this.jsonMapper = jsonMapper;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CheckpointResponse getCheckpoint(Long playthroughId) {
         Playthrough playthrough = playthroughRepository
                 .findById(playthroughId)
