@@ -4,13 +4,17 @@ import com.vnanalytics.common.exception.PlaythroughChapterConflictException;
 import com.vnanalytics.content.entity.Chapter;
 import com.vnanalytics.content.repository.ChapterRepository;
 import com.vnanalytics.playthrough.dto.CreatePlaythroughRequest;
+import com.vnanalytics.playthrough.dto.PlaythroughRegistrationResult;
 import com.vnanalytics.playthrough.dto.PlaythroughResponse;
 import com.vnanalytics.playthrough.entity.Playthrough;
 import com.vnanalytics.playthrough.repository.PlaythroughRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
 
+@Service
 public class PlaythroughService {
 
     private final PlaythroughRepository playthroughRepository;
@@ -24,7 +28,8 @@ public class PlaythroughService {
         this.chapterRepository = chapterRepository;
     }
 
-    public PlaythroughResponse createOrGet(
+    @Transactional
+    public PlaythroughRegistrationResult createOrGet(
             CreatePlaythroughRequest request
     ) {
         // clientPlaythroughId로 조회
@@ -48,9 +53,9 @@ public class PlaythroughService {
                 );
             }
 
-            return new PlaythroughResponse(
-                    playthrough.getId(),
-                    playthrough.getClientPlaythroughId()
+            return new PlaythroughRegistrationResult(
+                    toResponse(playthrough),
+                    false
             );
         }
 
@@ -68,6 +73,13 @@ public class PlaythroughService {
                 )
         );
 
+        return new PlaythroughRegistrationResult(
+                toResponse(playthrough),
+                true
+        );
+    }
+
+    private PlaythroughResponse toResponse(Playthrough playthrough) {
         return new PlaythroughResponse(
                 playthrough.getId(),
                 playthrough.getClientPlaythroughId()

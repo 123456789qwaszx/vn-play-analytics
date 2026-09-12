@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(PlaythroughChapterConflictException.class)
     public ResponseEntity<ErrorResponse> handlePlaythroughChapterConflict(
             PlaythroughChapterConflictException exception
     ) {

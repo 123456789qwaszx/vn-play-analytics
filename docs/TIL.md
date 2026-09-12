@@ -936,4 +936,146 @@ FOREIGN KEY (chapter_id)
 INDEX (chapter_id)
 → FK 검사 및 chapter 기준 탐색에 사용 가능
 
+
 ===
+
+---- lv7 ----
+
+[1] Playthrough 포스트 API 작성
+
+[2] 테스트
+
+1) 첫 Post시 Created
+요청
+```
+Post http://localhost:8080/playthroughs
+```
+```json
+{
+  "chapterKey": "qwer_scene",
+  "clientPlaythroughId": "bf54836ea3ad4e6f816292b450be2779"
+}
+```
+
+응답 201 Created
+```json
+{
+    "playthroughId": 1,
+    "clientPlaythroughId": "bf54836ea3ad4e6f816292b450be2779"
+}
+```
+
+2) 여러번 동일하게 반복 시 Get
+
+응답 200 OK
+```json
+{
+    "playthroughId": 1,
+    "clientPlaythroughId": "bf54836ea3ad4e6f816292b450be2779"
+}
+```
+
+3) Validation 검사
+
+요청
+```
+Post http://localhost:8080/playthroughs
+```
+```json
+{
+  "chapterKey": "qwer_scene"
+}
+```
+
+응답 400 Bad Request
+```json
+{
+    "errorCode": "VALIDATION_FAILED",
+    "message": "클라이언트 회차 ID는 필수입니다."
+}
+```
+
+요청
+```
+Post http://localhost:8080/playthroughs
+```
+```json
+{
+  "clientPlaythroughId": "bf54836ea3ad4e6f816292b450be2779"
+}
+```
+
+응답 400 Bad Request
+```json
+{
+    "errorCode": "VALIDATION_FAILED",
+    "message": "챕터 키는 필수입니다."
+}
+```
+
+- 첫 생성시 201 Created 확인
+- 이후 조회 +반환으로 200 Ok 확인
+- 만약 잘못된 구조는 400 BadRequest 확인
+
+[3] flow 구조
+
+1) 현재 DTO
+public record CreatePlaythroughRequest(
+
+        @NotBlank(message = "챕터 키는 필수입니다.")
+        @Size(max = 50, message = "챕터 키는 50자를 넘을 수 없습니다.")
+        String chapterKey,
+
+        @NotBlank(message = "클라이언트 회차 ID는 필수입니다.")
+        @Size(max = 32, message = "클라이언트 회차 ID는 32자를 넘을 수 없습니다.")
+        String clientPlaythroughId
+) {
+}
+
+2) Controller
+public ResponseEntity<PlaythroughResponse> createOrGetPlaythrough(
+        @Valid @RequestBody CreatePlaythroughRequest request
+)
+이므로 Service까지 들어가지 않음.
+
+3) JSON 수신 이후
+chapterKey
+→ "qwer_scene"
+
+clientPlaythroughId
+→ 필드 없음
+→ null
+
+@Valid 검사
+
+@NotBlank(clientPlaythroughId)
+→ 실패
+
+→ 400 Bad Request
+
+
+4) 이미 등록된 회차의 chapterKey를 다르게 Post(동일 사용자의 멀티 디바이스 가정)
+
+요청
+```
+Post http://localhost:8080/playthroughs
+```
+```json
+{
+  "chapterKey": "another_scene",
+  "clientPlaythroughId": "bf54836ea3ad4e6f816292b450be2779"
+}
+`
+
+응답
+```json
+{
+  "chapterKey": "another_scene",
+  "clientPlaythroughId": "bf54836ea3ad4e6f816292b450be2779"
+}
+
+{
+    "errorCode": "PLAYTHROUGH_CHAPTER_CONFLICT",
+    "message": "같은 클라이언트 회차 ID가 다른 챕터에 등록되어 있습니다. clientPlaythroughId=bf54836ea3ad4e6f816292b450be2779, existing=qwer_scene, requested=another_scene"
+}
+```
