@@ -1494,5 +1494,131 @@ GET http://localhost:8080/playthroughs/2/checkpoint
 }
 ```
 
-
 ===
+
+---- lv10 ----
+
+[1] 유니티에서 LocalSaveFile을 snapshot으로 실제로 보내도록 수정
+- 클라의 LocalSaveFile은 chapterCompleted = true인 저장은 끝난 것이기에, 이어갈 장면이 없는 상태. 따라서 CurrentEpisodeId가 비어있을 가능성이 있다고 보임.
+
+- 반면 지금 서버/DTO 검증은 episodeKey를 무조건 필수로 잡고 있음. 확인 필요.
+
+- 실제로 CurrentEpisodeId를 비워두기에, 임시로 채워진 테스트Session을 사용.
+
+[2] 테스트
+
+1) 세이브 버튼 누르고 서버에 저장되는지
+[서버 회차]
+chapterKey: qwer_scene
+clientPlaythroughId: 305635ee7ef9459fa1e6150a1fa2dbd5
+HTTP 201
+server playthroughId: 5
+UnityEngine.Debug:Log (object)
+
+[서버 백업] 전송 시작
+server playthroughId: 5
+episodeKey: EP01 / completed: False
+UnityEngine.Debug:Log (object)
+
+[서버 백업]
+server playthroughId: 5
+HTTP 200
+checkpointId: 2
+saved episodeKey: EP01
+UnityEngine.Debug:Log (object)
+
+
+`
+같은 곳에서 재시도 멱등 확인 됨
+
+[서버 백업]
+server playthroughId: 5
+HTTP 200
+checkpointId: 2
+saved episodeKey: EP01
+UnityEngine.Debug:Log (object)
+`
+
+`
+SELECT
+    id,
+    playthrough_id,
+    episode_key,
+    chapter_completed,
+    saved_at
+FROM checkpoints;
+`
+1,2,EP03,false,2026-09-12 08:20:57.565107
+2,5,EP01,false,2026-09-12 08:51:17.583473
+`
+
+확인결과: 클라에서 세이브 버튼 누를 시, 서버에 저장되는 것을 확인함.
+
+
+2) 더 진행 후에 저장 시에 같은 checkpoint 행이 UPDATE 되는지
+
+[서버 백업] 전송 시작
+server playthroughId: 5
+episodeKey: EP03 / completed: False
+UnityEngine.Debug:Log (object)
+
+[서버 백업]
+server playthroughId: 5
+HTTP 200
+checkpointId: 2
+saved episodeKey: EP03
+UnityEngine.Debug:Log (object)
+
+
+SELECT
+    id,
+    playthrough_id,
+    episode_key,
+    chapter_completed,
+    saved_at
+FROM checkpoints;
+
+1,2,EP03,false,2026-09-12 08:20:57.565107
+2,5,EP03,false,2026-09-12 08:52:46.517716
+
+확인결과: EP03까지 진행후 ->
+다시 서버에 저장 ->
+같은 checkpoint 행이 EP03으로 UPDATE 확인
+
+2,5,EP01,false,2026-09-12 08:51:17.583473(전) -> 2,5,EP03,false,2026-09-12 08:52:46.517716(후)
+
+- INSERT → 같은 행 UPDATE + Dirty Checking흐름까지 실제 Unity에서 확인.
+
+3) 장면 중간 상태가 서버 checkpoint를 오염시키지 않는지
+- 롤백 / 선택 등
+
+확인결과: 한 행 유지됨
+
+4) 챕터 완료된 것도 서버에 저장 되는지
+- chapterCompleted = true인 상태를 만든 후 저장
+
+[U3 서버 백업] 전송 시작
+server playthroughId: 6
+episodeKey: EP04 / completed: True
+UnityEngine.Debug:Log (object)
+
+[U3 서버 백업]
+server playthroughId: 6
+HTTP 200
+checkpointId: 3
+saved episodeKey: EP04
+UnityEngine.Debug:Log (object)
+
+
+1,2,EP03,false,2026-09-12 08:20:57.565107
+2,5,EP03,false,2026-09-12 08:52:46.517716
+3,6,EP04,true,2026-09-12 09:00:34.230720
+
+- 첫 백업 -> checkpoints 새 행 생성 확인
+- 같은 회차 재백업 -> 같은 checkpointId UPDATE 확인
+- EP03 등 최신 저장 지점으로 갱신 확인
+- chapterCompleted 갱신 확인
+- 새 회차 시작 시 기존 회차와 섞이지 않고 별도 checkpoint 행 생성 하는 것 확인
+
+- 롤백 등에서도 localsnap샷 기준이기에 임시 상태와 분리됨을 확인함
+(이것은 클라측 정책 신뢰하기로 결정함)
