@@ -2103,3 +2103,105 @@ episode_key / option_index / label / choice_count / choice_ratio
 EP01,0,"성실하게 (Via 있음, 같은 장면)",2,50.0
 EP01,1,"요령있게 (Via 없음, 같은 장면)",2,50.0
 ```
+
+===
+
+---- lv14 ----
+
+[1] ChoiceStatisticsService 작성
+
+DB 조회 결과
+ChoiceRatioRow
+        ↓
+Service 변환
+        ↓
+API 응답
+ChoiceRatioResponse
+
+[2] 테스트
+
+요청
+```
+GET http://localhost:8080/statistics/choices
+```
+
+응답
+```json
+[
+    {
+        "episodeKey": "EP01",
+        "optionIndex": 0,
+        "label": "성실하게 (Via 있음, 같은 장면)",
+        "choiceCount": 2,
+        "choiceRatio": 50.0
+    },
+    {
+        "episodeKey": "EP01",
+        "optionIndex": 1,
+        "label": "요령있게 (Via 없음, 같은 장면)",
+        "choiceCount": 2,
+        "choiceRatio": 50.0
+    }
+]
+```
+
+[3] 엔드투엔드 검증
+1) 유니티 실행 후 새 게임 2번 진행
+
+요청
+```
+GET http://localhost:8080/statistics/choices
+```
+
+응답
+```json
+[
+    {
+        "episodeKey": "EP01",
+        "optionIndex": 0,
+        "label": "성실하게 (Via 있음, 같은 장면)",
+        "choiceCount": 4,
+        "choiceRatio": 66.7
+    },
+    {
+        "episodeKey": "EP01",
+        "optionIndex": 1,
+        "label": "요령있게 (Via 없음, 같은 장면)",
+        "choiceCount": 2,
+        "choiceRatio": 33.3
+    }
+]
+```
+
+확인결과:
+Unity에서 새 선택이 들어오고, 통계 API까지 자동으로 반영되는 것을 확인함.
+
+이것으로  vn-play-analytics는 완료 조건을 달성함.
+
+작업1.
+Unity VN 실제 플레이
+    ↓
+Spring 서버 회차 생성
+    ↓
+Checkpoint 백업
+    ↓
+서버에서 복원
+    ↓
+실제 Unity 이어하기
+
+그리고
+
+작업2.
+Unity 확정 선택
+    ↓
+ChoiceRecord replacement
+    ↓
+DB 정규화
+    ↓
+통계 집계
+    ↓
+GET /statistics/choices
+
+이 후 별도 문서 회고 문서 작성,
+정리 작업 진행.
+===
