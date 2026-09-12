@@ -1153,3 +1153,27 @@ server playthroughId: 3
 UnityEngine.Debug:Log (object)
 
 확인 결과: 기존 생성 회차를 반환 받아 사용하는 것을 확인함.
+
+===
+
+---- lv9 ----
+
+
+[1] checkpoint repository 작성 및 응답, 요청 DTO 작성
+
+request
+{
+  "episodeKey": "EP03",
+  "chapterCompleted": false,
+  "snapshotJson": "{ ... LocalSaveFile 전체 JSON ... }"
+}
+
+response
+{
+  "checkpointId": 1,
+  "playthroughId": 2,
+  "episodeKey": "EP03",
+  "chapterCompleted": false,
+  "snapshotJson": "{ ... }",
+  "savedAt": "2026-09-12T06:30:00Z"
+}

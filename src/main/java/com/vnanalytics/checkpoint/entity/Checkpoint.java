@@ -67,6 +67,18 @@ public class Checkpoint {
         this.savedAt = savedAt;
     }
 
+    public void update(
+            String episodeKey,
+            boolean chapterCompleted,
+            String snapshotJson,
+            Instant savedAt
+    ) {
+        this.episodeKey = episodeKey;
+        this.chapterCompleted = chapterCompleted;
+        this.snapshotJson = snapshotJson;
+        this.savedAt = savedAt;
+    }
+
     public Long getId() {
         return id;
     }
