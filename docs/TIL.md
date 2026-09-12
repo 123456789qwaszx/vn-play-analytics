@@ -1829,3 +1829,99 @@ id / choice_option_id /  playthrough_id
 }
 ```
 
+===
+
+---- lv12 ----
+
+[1] 유니티 테스트
+
+장면 확정 - 선택 2, Yarn 선택 0, 시청 0, [3] 4개, 백로그 9줄, 기록 1개, 시간 0+7s → EP03
+UnityEngine.Debug:Log (object)
+
+[선택 동기화] HTTP 204
+server playthroughId: 9
+choiceCount: 2
+UnityEngine.Debug:Log (object)
+
+
+\DB
+```
+SELECT * FROM choice_records;
+```
+
+id / choice_option_id / playthrough_id
+7,1,2
+8,4,2
+11,1,9
+12,3,9
+13,5,9
+16,2,12
+17,4,12
+18,5,12
+
+SELECT
+    id,
+    choice_option_id,
+    playthrough_id
+FROM choice_records
+WHERE playthrough_id = 9
+ORDER BY id;
+
+
+id / choice_option_id / playthrough_id
+11,1,9
+12,3,9
+13,5,9
+
+
+
+```sql
+SELECT
+    cr.id,
+    cr.playthrough_id,
+    e.episode_key,
+    co.option_index,
+    co.label,
+    co.is_auto + 0 AS is_auto
+FROM choice_records cr
+         JOIN choice_options co
+              ON cr.choice_option_id = co.id
+         JOIN episodes e
+              ON co.episode_id = e.id
+WHERE cr.playthrough_id = 9
+ORDER BY cr.id;
+```
+
+```output
+11,9,EP01,0,"성실하게 (Via 있음, 같은 장면)"
+12,9,EP02_01,0,복도로 (장면 나감)
+13,9,EP03,0,""
+```
+
+흐름
+첫 번째 PUT
+[EP01, EP02_01]
+choiceCount = 2
+
+        ↓ EP03 자동 진행 확정
+
+두 번째 PUT
+[EP01, EP02_01, EP03]
+choiceCount = 3
+
+        ↓
+
+DB 최종 상태
+3 rows
+
+[2]
+확인 결과:
+ ChoiceRecord는 플레이어가 클릭한 선택만이 아니라,
+ "확정된 진행 경로를 저장하고 있다.
+
+[3] 
+따라서 ChoiceRecord는 수동 선택, 자동 선택으로 구분하되,
+
+선택 비율 조사에서는
+is_auto = false 인 선택지만 통계로 삼는다.
+
