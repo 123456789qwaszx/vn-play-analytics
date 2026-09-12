@@ -1079,3 +1079,77 @@ Post http://localhost:8080/playthroughs
     "message": "같은 클라이언트 회차 ID가 다른 챕터에 등록되어 있습니다. clientPlaythroughId=bf54836ea3ad4e6f816292b450be2779, existing=qwer_scene, requested=another_scene"
 }
 ```
+
+===
+
+---- lv8 ----
+[1] 유니티 연동
+- Unity 로컬 회차 GUID와  Spring 서버 Playthrough PK 가 일치 검증.
+
+1) 유니티 클라
+[서버] SceneEntered — qwer_scene/EP01
+{
+  "clientPlaythroughId": "e465672a1fc94b0ea500c2be08b5fcba",
+  "chapterId": "qwer_scene",
+  "currentEpisodeId": "EP01",
+  "chapterCompleted": false,
+  "sceneCount": 0,
+  "lastCommittedPath": null,
+  "stats": {
+    "int": 0,
+    "power": 0
+  },
+  "yarnVariableCount": 4,
+  "backlogCount": 0
+}
+UnityEngine.Debug:Log (object)
+
+[서버] 연결 시작
+chapterKey: qwer_scene
+clientPlaythroughId: e465672a1fc94b0ea500c2be08b5fcba
+UnityEngine.Debug:Log (object)
+
+[서버]
+chapterKey: qwer_scene
+clientPlaythroughId: e465672a1fc94b0ea500c2be08b5fcba
+HTTP 201
+server playthroughId: 2
+UnityEngine.Debug:Log (object)
+
+
+2) DB
+SELECT *
+FROM playthroughs;
+
+1,bf54836ea3ad4e6f816292b450be2779,2026-09-12 04:56:28.031301,1
+2,e465672a1fc94b0ea500c2be08b5fcba,2026-09-12 05:48:36.999602,1
+
+확인결과: Unity 로그와 client_playthrough_id가 정확히 일치하는 것을 확인함.
+
+
+[2] 유니티 새 회차 시, 새로 생성 되는지 확인
+
+1) 유니티
+[서버]
+chapterKey: qwer_scene
+clientPlaythroughId: 5d9e6617d6ab4f6ea3e5bdd20cfd7b5f
+HTTP 201
+server playthroughId: 3
+UnityEngine.Debug:Log (object)
+
+2) DB
+3,5d9e6617d6ab4f6ea3e5bdd20cfd7b5f,2026-09-12 05:54:06.430228
+
+확인결과: 새로운 회차 추가됨을 확인함.
+
+
+[3] 이어하기 시, 기존 생성 해둔 회차로 연결 되는 지 확인
+
+[서버]
+chapterKey: qwer_scene
+clientPlaythroughId: 5d9e6617d6ab4f6ea3e5bdd20cfd7b5f
+HTTP 200
+server playthroughId: 3
+UnityEngine.Debug:Log (object)
+
+확인 결과: 기존 생성 회차를 반환 받아 사용하는 것을 확인함.
