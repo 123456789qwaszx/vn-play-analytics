@@ -3,12 +3,45 @@ package com.vnanalytics.common.exception;
 import com.vnanalytics.content.exception.ChapterKeyConflictException;
 import com.vnanalytics.content.exception.ContentValidationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParameter(
+            MissingServletRequestParameterException e
+    ) {
+        return buildErrorResponse(
+                ErrorCode.VALIDATION_FAILED,
+                "필수 요청 파라미터가 누락되었습니다: " + e.getParameterName()
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException e
+    ) {
+        return buildErrorResponse(
+                ErrorCode.VALIDATION_FAILED,
+                "요청 값의 자료형이 올바르지 않습니다: " + e.getName()
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableRequest(
+            HttpMessageNotReadableException e
+    ) {
+        return buildErrorResponse(
+                ErrorCode.VALIDATION_FAILED,
+                "요청 본문이 없거나 JSON 형식 또는 값의 자료형이 올바르지 않습니다."
+        );
+    }
 
     @ExceptionHandler(InvalidChoiceException.class)
     public ResponseEntity<ErrorResponse> handleInvalidChoice(

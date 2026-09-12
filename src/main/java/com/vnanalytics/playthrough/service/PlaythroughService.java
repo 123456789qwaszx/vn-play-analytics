@@ -1,5 +1,6 @@
 package com.vnanalytics.playthrough.service;
 
+import com.vnanalytics.common.exception.ChapterNotFoundException;
 import com.vnanalytics.common.exception.PlaythroughChapterConflictException;
 import com.vnanalytics.content.entity.Chapter;
 import com.vnanalytics.content.repository.ChapterRepository;
@@ -62,7 +63,9 @@ public class PlaythroughService {
         // 없으면 chapterKey로 Chapter 조회
         Chapter chapter = chapterRepository
                 .findByChapterKey(request.chapterKey())
-                .orElseThrow();
+                .orElseThrow(
+                        () -> new ChapterNotFoundException(request.chapterKey())
+                );
 
         // 새 Playthrough 저장
         Playthrough playthrough = playthroughRepository.save(

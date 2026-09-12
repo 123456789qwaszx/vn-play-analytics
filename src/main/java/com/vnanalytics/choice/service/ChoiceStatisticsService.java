@@ -3,6 +3,7 @@ package com.vnanalytics.choice.service;
 import com.vnanalytics.choice.dto.ChoiceRatioResponse;
 import com.vnanalytics.choice.repository.ChoiceStatisticsRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -11,12 +12,13 @@ public class ChoiceStatisticsService {
 
     private final ChoiceStatisticsRepository choiceStatisticsRepository;
 
-    private ChoiceStatisticsService(
+    public ChoiceStatisticsService(
             ChoiceStatisticsRepository choiceStatisticsRepository
     ) {
         this.choiceStatisticsRepository = choiceStatisticsRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ChoiceRatioResponse> getChoiceRatios() {
         return choiceStatisticsRepository
                 .findChoiceRatios()
