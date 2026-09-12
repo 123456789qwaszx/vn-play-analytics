@@ -1282,3 +1282,64 @@ response
   "snapshotJson": "{ ... }",
   "savedAt": "2026-09-12T06:30:00Z"
 }
+
+[2] checkpoint service 작성
+
+[3] CheckpointController 작성
+
+1) 형태
+@RestController
+@RequestMapping("/playthroughs/{playthroughId}/checkpoint")
+public class CheckpointController {
+
+    private final CheckpointService checkpointService;
+
+    public CheckpointController(
+            CheckpointService checkpointService
+    ) {
+        this.checkpointService = checkpointService;
+    }
+
+    @PutMapping
+    public ResponseEntity<CheckpointResponse> saveCheckpoint(
+            @PathVariable Long playthroughId,
+            @Valid @RequestBody SaveCheckpointRequest request
+    ) {
+        CheckpointResponse response =
+                checkpointService.saveCheckpoint(
+                        playthroughId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+    }
+}
+
+
+2) 컨트롤러에 오는 실제 HTTP 요청
+PUT /playthroughs/42/checkpoint?force=true HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer eyJhbGc...
+
+{
+  "episodeKey": "ep_03",
+  "chapterCompleted": false,
+  "snapshotJson": "{...}"
+}
+
+3) @RequestBody
+HTTP 요청 본문을 읽어서 자바 객체로 변환
+
+4) POST가 아니라 PUT 사용.
+- 이 playthrough의 checkpoint를 특정 내용으로 저장해라.
+- URL 자체가 이미 대상 하나를 지정.
+- 그렇기에 같은 URL을 여러번 보내고
+첫 PUT
+→ Checkpoint INSERT
+두 번째 PUT
+→ 같은 Checkpoint UPDATE
+세 번째 PUT
+→ 같은 Checkpoint UPDATE
+
+[4]

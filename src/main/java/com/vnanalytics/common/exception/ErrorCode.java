@@ -11,7 +11,9 @@ public enum ErrorCode {
     PLAYTHROUGH_CHAPTER_CONFLICT(HttpStatus.CONFLICT),
 
     CHAPTER_NOT_FOUND(HttpStatus.NOT_FOUND),
-    PLAYTHROUGH_NOT_FOUND(HttpStatus.NOT_FOUND);
+    PLAYTHROUGH_NOT_FOUND(HttpStatus.NOT_FOUND),
+
+    INVALID_CHECKPOINT(HttpStatus.BAD_REQUEST);
 
 
     private final HttpStatus httpStatus;

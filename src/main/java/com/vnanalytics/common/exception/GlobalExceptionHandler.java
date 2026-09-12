@@ -10,6 +10,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidCheckpointException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCheckpoint(
+            InvalidCheckpointException e
+    ) {
+        return buildErrorResponse(
+                ErrorCode.INVALID_CHECKPOINT,
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(PlaythroughNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlePlaythroughNotFound(
             PlaythroughNotFoundException e
     ) {
