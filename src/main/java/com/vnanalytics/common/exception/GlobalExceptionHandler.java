@@ -10,6 +10,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidChoiceException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidChoice(
+            InvalidChoiceException e
+    ) {
+        return buildErrorResponse(
+                ErrorCode.INVALID_CHOICE,
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(InvalidCheckpointException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCheckpoint(
             InvalidCheckpointException e

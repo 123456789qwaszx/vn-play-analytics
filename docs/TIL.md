@@ -1730,10 +1730,102 @@ chapterKey역시
 
 [6] ChoiceRecord 작성
 
+[7] Choice PUT API 작성
+
+[8] 테스트
+
+1) 정상 replacement
+
+요청
+{
+  "choices": [
+    {
+      "episodeKey": "EP01",
+      "optionIndex": 0
+    },
+    {
+      "episodeKey": "EP02_01",
+      "optionIndex": 0
+    }
+  ]
+}
+
+응답 204
+
+행 2개 확인
+id / choice_option_id /  playthrough_id
+1,1,2
+2,3,2
 
 
 
 
+2) 다른 경로로 교체
+```json
+{
+  "choices": [
+    {
+      "episodeKey": "EP01",
+      "optionIndex": 1
+    },
+    {
+      "episodeKey": "EP02_02",
+      "optionIndex": 0
+    }
+  ]
+}
+```
 
+응답 204
 
+DB 현재 두 행으로 교체 확인
+id / choice_option_id /  playthrough_id
+3,2,2
+4,4,2
+
+3) 잘못된 요청
+요청
+```
+{
+  "choices": [
+    {
+      "episodeKey": "EP99",
+      "optionIndex": 0
+    }
+  ]
+}
+```
+
+응답
+``` 400 BadRequest
+{
+    "errorCode": "INVALID_CHOICE",
+    "message": "회차의 챕터에 존재하지 않는 에피소드입니다: EP99"
+}
+```
+
+4) 존재하지 않는 선택지 요청
+요청
+```
+{
+  "choices": [
+    {
+      "episodeKey": "EP01",
+      "optionIndex": 0
+    },
+    {
+      "episodeKey": "EP02_01",
+      "optionIndex": 3
+    }
+  ]
+}
+```
+
+응답 400 BadRequest
+```
+{
+    "errorCode": "INVALID_CHOICE",
+    "message": "에피소드에 존재하지 않는 선택지입니다: EP02_01 / 3"
+}
+```
 
