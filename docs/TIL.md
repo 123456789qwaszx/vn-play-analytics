@@ -1925,3 +1925,181 @@ DB 최종 상태
 선택 비율 조사에서는
 is_auto = false 인 선택지만 통계로 삼는다.
 
+===
+
+---- lv13 ----
+
+[1] choice_ratio의 의미 재정의
+- 현재 서버에 남아 있는 확정 ChoiceRecord 중, 자동 선택을 제외하고 같은 Episode에서 각 선택지가 차지하는 비율
+
+- 만약 EP03 처럼 is_auto = true인 선택은 ChoiceRecord에는 존재해도 통계에서는 제외.
+
+1) 선택 횟수 집계
+- 선택지별로 몇 번 골랐는지 갯수만.
+
+```
+SELECT
+    e.episode_key,
+    co.option_index,
+    co.label,
+    COUNT(*) AS choice_count
+FROM choice_records cr
+         JOIN choice_options co
+              ON cr.choice_option_id = co.id
+         JOIN episodes e
+              ON co.episode_id = e.id
+WHERE co.is_auto = 0
+GROUP BY
+    e.id,
+    e.episode_key,
+    co.id,
+    co.option_index,
+    co.label
+ORDER BY
+    e.id,
+    co.option_index;
+```
+
+```output
+EP01,0,"성실하게 (Via 있음, 같은 장면)",2
+EP01,1,"요령있게 (Via 없음, 같은 장면)",2
+EP02_01,0,복도로 (장면 나감),1
+EP02_02,0,"복도로 (Via 있음, 장면 나감)",3
+```
+
+2) 비율 추가
+- 에피소드 내 점유율
+```
+SELECT
+    e.episode_key,
+    co.option_index,
+    co.label,
+    COUNT(*) AS choice_count,
+
+    ROUND(
+            COUNT(*) * 100.0
+                / SUM(COUNT(*)) OVER (
+                PARTITION BY e.id
+                ),
+            1
+    ) AS choice_ratio
+FROM choice_records cr
+         JOIN choice_options co
+              ON cr.choice_option_id = co.id
+         JOIN episodes e
+              ON co.episode_id = e.id
+WHERE co.is_auto = 0
+GROUP BY
+    e.id,
+    e.episode_key,
+    co.id,
+    co.option_index,
+    co.label
+ORDER BY
+    e.id,
+    co.option_index;
+```
+
+EP01,0,"성실하게 (Via 있음, 같은 장면)",2,50.0
+EP01,1,"요령있게 (Via 없음, 같은 장면)",2,50.0
+EP02_01,0,복도로 (장면 나감),1,100.0
+EP02_02,0,"복도로 (Via 있음, 장면 나감)",3,100.0
+
+
+3) 분기 없는 에피소드 제거
+- 선택지가 하나뿐인 에피소드 제거
+```
+SELECT
+    e.episode_key,
+    co.option_index,
+    co.label,
+    COUNT(*) AS choice_count,
+    ROUND(
+        COUNT(*) * 100.0
+        / SUM(COUNT(*)) OVER (
+            PARTITION BY e.id
+        ),
+        1
+    ) AS choice_ratio
+FROM choice_records cr
+JOIN choice_options co
+    ON cr.choice_option_id = co.id
+JOIN episodes e
+    ON co.episode_id = e.id
+WHERE co.is_auto = 0
+
+  AND e.id IN (
+      SELECT episode_id
+      FROM choice_options
+      WHERE is_auto = 0
+      GROUP BY episode_id
+      HAVING COUNT(*) >= 2
+  )
+
+GROUP BY
+    e.id,
+    e.episode_key,
+    co.id,
+    co.option_index,
+    co.label
+ORDER BY
+    e.id,
+    co.option_index;
+```
+
+```
+EP01,0,"성실하게 (Via 있음, 같은 장면)",2,50.0
+EP01,1,"요령있게 (Via 없음, 같은 장면)",2,50.0
+```
+
+4) 0회 선택지 살리기
+- 아무도 안 고른 선택지가 결과에서 빠지는데,
+- 기준은 choice_options으로 뒤집고, 기록을 LEFT JOIN해서 0명이 골라도 행으로 표시
+
+
+SELECT
+    e.episode_key,
+    co.option_index,
+    co.label,
+    COUNT(cr.id) AS choice_count,
+    ROUND(
+        COUNT(cr.id) * 100.0
+        / NULLIF(
+            SUM(COUNT(cr.id)) OVER (
+                PARTITION BY e.id
+            ),
+            0
+        ),
+        1
+    ) AS choice_ratio
+FROM choice_options co
+JOIN episodes e
+    ON co.episode_id = e.id
+LEFT JOIN choice_records cr
+    ON cr.choice_option_id = co.id
+WHERE co.is_auto = 0
+
+  AND e.id IN (
+      SELECT episode_id
+      FROM choice_options
+      WHERE is_auto = 0
+      GROUP BY episode_id
+      HAVING COUNT(*) >= 2
+  )
+
+GROUP BY
+    e.id,
+    e.episode_key,
+    co.id,
+    co.option_index,
+    co.label
+ORDER BY
+    e.id,
+    co.option_index;
+
+
+```output
+episode_key / option_index / label / choice_count / choice_ratio
+EP01,0,"성실하게 (Via 있음, 같은 장면)",2,50.0
+EP01,1,"요령있게 (Via 없음, 같은 장면)",2,50.0
+```
