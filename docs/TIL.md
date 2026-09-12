@@ -738,3 +738,40 @@ chapterId = 1
 Unity
 
 ===
+
+---- lv5 ----
+[1] Playthrough Entity 작성 및 DB 반영 확인
+
+mysql> SHOW TABLES;
++------------------------+
+| Tables_in_vn_analytics |
++------------------------+
+| chapters               |
+| choice_options         |
+| episodes               |
+| playthroughs           |
++------------------------+
+
+mysql> DESCRIBE playthroughs;
++-----------------------+-------------+------+-----+---------+----------------+
+| Field                 | Type        | Null | Key | Default | Extra          |
++-----------------------+-------------+------+-----+---------+----------------+
+| id                    | bigint      | NO   | PRI | NULL    | auto_increment |
+| client_playthrough_id | varchar(32) | NO   | UNI | NULL    |                |
+| started_at            | datetime(6) | NO   |     | NULL    |                |
+| chapter_id            | bigint      | NO   | MUL | NULL    |                |
++-----------------------+-------------+------+-----+---------+----------------+
+
+mysql> SHOW CREATE TABLE playthroughs;
++--------------
+| Table        | Create Table                                                                                      
+| playthroughs | CREATE TABLE `playthroughs` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `client_playthrough_id` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `started_at` datetime(6) NOT NULL,
+  `chapter_id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_playthrough_client_id` (`client_playthrough_id`),
+  KEY `fk_playthrough_chapter` (`chapter_id`),
+  CONSTRAINT `fk_playthrough_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci |
