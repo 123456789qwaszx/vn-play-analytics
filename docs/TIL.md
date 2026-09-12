@@ -897,3 +897,43 @@ chapter_id INDEX 생성
 
 ===
 
+---- lv6 ----
+
+[1] 
+
+1) 구조
+chapters
+
+id | chapter_key
+1  | qwer_scene
+
+playthroughs
+
+id | chapter_id | client_playthrough_id
+1  |     1      | abc...
+2  |     1      | def...
+3  |     1      | ghi...
+
+2) 관계
+Chapter PK 1
+    ↑
+    ├── Playthrough PK 1
+    ├── Playthrough PK 2
+    └── Playthrough PK 3
+
+
+3) 세 가지 DB 장치가 서로 다른 일을 함.
+
+PRIMARY KEY (id)
+→ Playthrough 자체를 식별
+
+UNIQUE (client_playthrough_id)
+→ 같은 Unity 회차 중복 등록 방지
+
+FOREIGN KEY (chapter_id)
+→ 존재하지 않는 Chapter 참조 방지
+
+INDEX (chapter_id)
+→ FK 검사 및 chapter 기준 탐색에 사용 가능
+
+===
