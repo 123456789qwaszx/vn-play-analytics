@@ -1342,4 +1342,115 @@ HTTP 요청 본문을 읽어서 자바 객체로 변환
 세 번째 PUT
 → 같은 Checkpoint UPDATE
 
-[4]
+
+[4] 테스트
+
+1) 서버 저장경로와 일치 검증 동작하는지
+
+요청
+PUT http://localhost:8080/playthroughs/2/checkpoint
+```json
+{
+  "episodeKey": "EP01",
+  "chapterCompleted": false,
+  "snapshotJson": "{\"playthroughId\":\"e465672a1fc94b0ea500c2be08b5fcba\",\"chapterId\":\"qwer_scene\",\"currentEpisodeId\":\"EP01\",\"chapterCompleted\":false}"
+}
+```
+
+응답 200 OK
+```json
+{
+    "checkpointId": 1,
+    "playthroughId": 2,
+    "episodeKey": "EP01",
+    "chapterCompleted": false,
+    "snapshotJson": "{\"playthroughId\":\"e465672a1fc94b0ea500c2be08b5fcba\",\"chapterId\":\"qwer_scene\",\"currentEpisodeId\":\"EP01\",\"chapterCompleted\":false}",
+    "savedAt": "2026-09-12T08:17:41.302243200Z"
+}
+```
+
+
+```
+SELECT
+    id,
+    playthrough_id,
+    episode_key,
+    chapter_completed,
+    saved_at
+FROM checkpoints;
+```
+
+DB
+```
+1,2,EP01,false,2026-09-12 08:17:41.302243
+```
+
+2) 같은 Checkpoint를 다시 PUT해서 UPDATE되는지
+
+요청
+PUT http://localhost:8080/playthroughs/2/checkpoint
+```json
+{
+  "episodeKey": "EP03",
+  "chapterCompleted": false,
+  "snapshotJson": "{\"playthroughId\":\"e465672a1fc94b0ea500c2be08b5fcba\",\"chapterId\":\"qwer_scene\",\"currentEpisodeId\":\"EP03\",\"chapterCompleted\":false}"
+}
+```
+
+응답 200 OK
+```json
+{
+  "checkpointId": 1,
+  "playthroughId": 2,
+  "episodeKey": "EP03",
+  "chapterCompleted": false,
+  "snapshotJson": "...",
+  "savedAt": "..."
+}
+```
+
+확인 결과: 같은 checkpointId를 유지. 내용만 변경된 것을 확인함.
+
+[5] DB에 saveCheckpoint put 흐름.
+findByPlaythrough(...)
+→ 기존 Checkpoint 조회
+→ 영속 상태
+
+checkpoint.update(...)
+→ Java 객체 값 변경
+
+@Transactional 종료
+→ JPA가 변경 감지
+→ UPDATE SQL
+
+[6] snapshot 내부 검증 실패 및 400 확인
+
+1) 일부러 currentEpisodeId를 바깥 요청과 다르게 한 경우
+
+요청
+http://localhost:8080/playthroughs/2/checkpoint
+```
+{
+  "episodeKey": "EP03",
+  "chapterCompleted": false,
+  "snapshotJson": "{\"playthroughId\":\"e465672a1fc94b0ea500c2be08b5fcba\",\"chapterId\":\"qwer_scene\",\"currentEpisodeId\":\"EP01\",\"chapterCompleted\":false}"
+}
+```
+
+응답 400 Bad Request
+```
+{
+    "errorCode": "INVALID_CHECKPOINT",
+    "message": "스냅샷의 에피소드 키가 요청과 일치하지 않습니다."
+}
+```
+
+- 확인 결과
+ 바깥은 episodeKey = EP03 인데,
+ snapshot 안은 = currentEpisodeIf = EP01로 모순된 경우
+ 잘 처리함.
+
+- 서버가 snapshotJson을 그냥 문자열로 믿고 저장하지 않는 다는 것을 확인.
+
+
+===
