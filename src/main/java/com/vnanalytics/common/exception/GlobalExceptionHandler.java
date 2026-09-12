@@ -10,6 +10,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    public ResponseEntity<ErrorResponse> handlePlaythroughChapterConflict(
+            PlaythroughChapterConflictException exception
+    ) {
+        return buildErrorResponse(
+                ErrorCode.PLAYTHROUGH_CHAPTER_CONFLICT,
+                exception.getMessage()
+        );
+    }
+
     @ExceptionHandler(ChapterNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleChapterNotFound(
             ChapterNotFoundException e

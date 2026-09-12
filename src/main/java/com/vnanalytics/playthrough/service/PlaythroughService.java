@@ -1,5 +1,6 @@
 package com.vnanalytics.playthrough.service;
 
+import com.vnanalytics.common.exception.PlaythroughChapterConflictException;
 import com.vnanalytics.content.entity.Chapter;
 import com.vnanalytics.content.repository.ChapterRepository;
 import com.vnanalytics.playthrough.dto.CreatePlaythroughRequest;
@@ -35,6 +36,17 @@ public class PlaythroughService {
         // 있으면 기존 Playthrough 반환
         if (existing.isPresent()) {
             Playthrough playthrough = existing.get();
+
+            String existingChapterKey =
+                    playthrough.getChapter().getChapterKey();
+
+            if (!existingChapterKey.equals(request.chapterKey())) {
+                throw new PlaythroughChapterConflictException(
+                        request.clientPlaythroughId(),
+                        existingChapterKey,
+                        request.chapterKey()
+                );
+            }
 
             return new PlaythroughResponse(
                     playthrough.getId(),
