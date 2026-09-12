@@ -10,7 +10,9 @@ public enum ErrorCode {
     CHAPTER_KEY_CONFLICT(HttpStatus.CONFLICT),
     PLAYTHROUGH_CHAPTER_CONFLICT(HttpStatus.CONFLICT),
 
-    CHAPTER_NOT_FOUND(HttpStatus.NOT_FOUND);
+    CHAPTER_NOT_FOUND(HttpStatus.NOT_FOUND),
+    PLAYTHROUGH_NOT_FOUND(HttpStatus.NOT_FOUND);
+
 
     private final HttpStatus httpStatus;
 

@@ -4,6 +4,7 @@ import com.vnanalytics.checkpoint.dto.CheckpointResponse;
 import com.vnanalytics.checkpoint.dto.SaveCheckpointRequest;
 import com.vnanalytics.checkpoint.entity.Checkpoint;
 import com.vnanalytics.checkpoint.repository.CheckpointRepository;
+import com.vnanalytics.common.exception.PlaythroughNotFoundException;
 import com.vnanalytics.playthrough.entity.Playthrough;
 import com.vnanalytics.playthrough.repository.PlaythroughRepository;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,9 @@ public class CheckpointService {
     ) {
         Playthrough playthrough = playthroughRepository
                 .findById(playthroughId)
-                .orElseThrow();
+                .orElseThrow(
+                        () -> new PlaythroughNotFoundException(playthroughId)
+                );
 
         Instant now = Instant.now();
 

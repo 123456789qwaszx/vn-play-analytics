@@ -10,13 +10,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    public ResponseEntity<ErrorResponse> handlePlaythroughNotFound(
+            PlaythroughNotFoundException e
+    ) {
+        return buildErrorResponse(
+                ErrorCode.PLAYTHROUGH_NOT_FOUND,
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(PlaythroughChapterConflictException.class)
     public ResponseEntity<ErrorResponse> handlePlaythroughChapterConflict(
-            PlaythroughChapterConflictException exception
+            PlaythroughChapterConflictException e
     ) {
         return buildErrorResponse(
                 ErrorCode.PLAYTHROUGH_CHAPTER_CONFLICT,
-                exception.getMessage()
+                e.getMessage()
         );
     }
 
