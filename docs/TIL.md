@@ -775,3 +775,125 @@ mysql> SHOW CREATE TABLE playthroughs;
   KEY `fk_playthrough_chapter` (`chapter_id`),
   CONSTRAINT `fk_playthrough_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci |
+
+
+[2] playthrough테이블에 chapter_id라는 FK를 만들었는데 KEY도 생긴 이유
+KEY `fk_playthrough_chapter` (`chapter_id`),
+CONSTRAINT `fk_playthrough_chapter`
+FOREIGN KEY (`chapter_id`)
+REFERENCES `chapters` (`id`)
+
+1) FK와 인덱스는 서로 역할이 다름
+ FOREIGN KEY:
+  -> 데이터가 올바른 관계를 가지는 지 검사
+
+ INDEX:
+  - 데이터를 빨리 찾게 해주는 구조
+
+  chapters
+id
+1  qwer_scene
+2  chapter_b
+
+playthroughs
+id   chapter_id
+1       1
+2       1
+3       1
+4       2
+위와 같을 때,
+
+FOREIGN KEY (chapter_id)
+REFERENCES chapters(id)
+이 제약은
+
+INSERT INTO playthroughs (..., chapter_id)
+VALUES (..., 9999);
+이걸 막음
+
+즉, FK의 관심사는 chapter_id가 실제 존재하는 Chapter 를 가리키고 있는가? 임.
+
+2) 
+반면 INDEX는 chapter_id = 1인 행들이 어디에 있는가? 를 빨리 찾기 위함.
+
+
+id       chapter_id
+1        3
+2        8
+3        1
+4        2
+5        1
+...
+1000000  7
+이런 상황에서 만약 INDEX가 없다면
+DB는 Full Table Scan을 해야함.
+
+3) 반면 INDEX가 있으면?
+
+chapter_id에 인덱스가 있으면 DB는 별도의 검색 구조를 가짐.
+
+chapter_id
+1 → playthrough 3
+1 → playthrough 5
+1 → playthrough 71
+1 → playthrough 800
+2 → playthrough 4
+2 → playthrough 20
+3 → playthrough 1
+...
+위와 같은 정렬된 탐색 구조.
+
+WHERE chapter_id = 1를 보고
+chapter_id 인덱스
+        ↓
+1이 있는 위치 탐색
+        ↓
+해당 playthrough들만 접근
+
+- 즉 DB 전체를 처음부터 끝까지 뒤질 필요가 줄어든다.
+
+[2] 그런데 왜 FK를 만들면 인덱스까지 필요한가?
+
+- MySQL/InnoDB는 외래키 검사를 빠르게 하기 위해 외래키 컬럼에 적절한 인덱스가 필요
+- 참조하는 쪽의 FK컬럼이 선두 컬럼 인덱스가 없다면 InnoDB가 자동 생성.
+
+현재 구조를 보면:
+
+Chapter
+   ↑
+   │ chapter_id
+Playthrough
+
+playthroughs.chapter_id는 FK.
+
+
+이제 Chapter를 삭제한다고 가정.
+
+DELETE FROM chapters
+WHERE id = 1;
+DB는 그냥 지워버릴 수 없습니다.
+
+먼저:
+chapter_id = 1을 참조하는 Playthrough가 있나? 를 검사해야 함.
+
+
+즉 내부적으로 "playthroughs 중에서 chapter_id = 1인 행이 있는가?" 라는 질문을 해야하는데,
+인덱스가 없다면 playthroughs 모든 행을 전체 검사한다.
+InnoDB는 FK를 만들 때 필요한 인덱스가 없으면 자동으로 만들어 둔다.
+(FK 검사가 table scan 없이 빠르게 이루어지도록 인덱스를 요구.)
+
+흐름:
+@ManyToOne
+    ↓
+@JoinColumn(chapter_id)
+    ↓
+FOREIGN KEY 생성
+    ↓
+InnoDB가 FK 검사용 인덱스 필요
+    ↓
+chapter_id INDEX 생성
+
+- @ManyToOne이 단순히 Java 객체끼리 연결되는 기능이 아니라, DB로 내려가면 FK와 그 관계를 효율적으로 유지하기 위한 인덱스 구조까지 이어질 수 있다
+
+===
+
