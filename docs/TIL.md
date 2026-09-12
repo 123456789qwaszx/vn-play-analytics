@@ -1452,5 +1452,47 @@ http://localhost:8080/playthroughs/2/checkpoint
 
 - 서버가 snapshotJson을 그냥 문자열로 믿고 저장하지 않는 다는 것을 확인.
 
+[7] 저장된 Checkpoint 조회 API 작성
+
+[8] getCheckpoint 테스트
+
+1) 회차 없음
+요청
+GET http://localhost:8080/playthroughs/9999/checkpoint
+
+응답 404 NOT FOUND
+```
+{
+    "errorCode": "PLAYTHROUGH_NOT_FOUND",
+    "message": "게임 회차를 찾을 수 없습니다: 9999"
+}
+```
+
+
+2) 회차 있고 백업 없음
+요청
+GET http://localhost:8080/playthroughs/1/checkpoint
+
+응답 204 No Content
+""
+
+
+3) 회차 있고 백업 있음
+
+요청
+GET http://localhost:8080/playthroughs/2/checkpoint
+
+응답 200 OK
+```
+{
+    "checkpointId": 1,
+    "playthroughId": 2,
+    "episodeKey": "EP03",
+    "chapterCompleted": false,
+    "snapshotJson": "{\"playthroughId\":\"e465672a1fc94b0ea500c2be08b5fcba\",\"chapterId\":\"qwer_scene\",\"currentEpisodeId\":\"EP03\",\"chapterCompleted\":false}",
+    "savedAt": "2026-09-12T08:20:57.565107Z"
+}
+```
+
 
 ===

@@ -35,6 +35,20 @@ public class CheckpointService {
     }
 
     @Transactional
+    public CheckpointResponse getCheckpoint(Long playthroughId) {
+        Playthrough playthrough = playthroughRepository
+                .findById(playthroughId)
+                .orElseThrow(
+                        () -> new PlaythroughNotFoundException(playthroughId)
+                );
+
+        return checkpointRepository
+                .findByPlaythrough(playthrough)
+                .map(checkpoint -> this.toResponse(checkpoint))
+                .orElse(null);
+    }
+
+    @Transactional
     public CheckpointResponse saveCheckpoint(
             Long playthroughId,
             SaveCheckpointRequest request

@@ -19,6 +19,19 @@ public class CheckpointController {
         this.checkpointService = checkpointService;
     }
 
+    @GetMapping
+    public ResponseEntity<CheckpointResponse> getCheckpoint(
+            @PathVariable Long playthroughId
+    ) {
+        CheckpointResponse response =
+                checkpointService.getCheckpoint(playthroughId);
+
+        if(response == null)
+            return ResponseEntity.noContent().build();
+
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping
     public ResponseEntity<CheckpointResponse> saveCheckpoint(
             @PathVariable Long playthroughId,
