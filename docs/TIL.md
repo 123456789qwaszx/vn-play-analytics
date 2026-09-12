@@ -1158,6 +1158,111 @@ UnityEngine.Debug:Log (object)
 
 ---- lv9 ----
 
+[0]
+API란?
+- 이 프로그램을 이렇게 호출하면 무엇을 해준다고 약속된 창구.
+- 서버에서 게임 클라이언트가 세이브 데이터를 맡기고 찾아갈 통로의 규격이 API.
+
+REST란,
+- 그 창구를 어떤 규칙으로 설계할 것인가에 대한 스타일.
+
+핵심 아이디어:
+- 모든 걸 리소스로 보고, 각각에 고유한 URL을 준다.
+- 그 리소스로 뭘 할지는 URL이 아니라 HTTP 메서드로 표현한다.
+
+예를들면,
+REST 이전 스타일은,
+`
+POST /saveCheckpoint?id=42
+POST /getCheckpoint?id=42
+POST /deleteCheckpoint?id=42
+`
+
+REST는 동사를 HTTP 메서드에 맡김.
+`
+PUT    /playthroughs/42/checkpoint   → 저장
+GET    /playthroughs/42/checkpoint   → 조회
+DELETE /playthroughs/42/checkpoint   → 삭제
+`
+
+[0-1] @RestController란?
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Controller      // ← 이게 들어있고
+@ResponseBody    // ← 이것도 들어있음
+public @interface RestController {
+    @AliasFor(annotation = Controller.class)
+    String value() default "";
+}
+- 그냥 두 개를 미리 붙여둔 메타 어노테이션. 
+따라서, 그냥 @Controller, @ResponseBody로 해도 똑같음.
+
+- Controller는,
+1. @Component를 포함하고 있어서 컴포넌트 스캔 대상이 됨(빈으로 등록)
+2. RequestMappingHandlerMapping에게 '이 클래스는 요청 핸들러'라고 인식하게 함.
+
+- 만약 컨트롤러 메서드가 값을 반환하면, Spring은 그 값을 처리할 핸들러를 후보 목록에서 위에서부터 순회하며 첫 번째로 처리 가능한 것을 고름.
+
+- RequestMappingHandlerAdapter가 가진 목록의 실제 순서
+1. ModelAndViewMethodReturnValueHandler      → ModelAndView 반환 시
+2. ModelMethodProcessor                       → Model 반환 시
+3. ViewMethodReturnValueHandler               → View 반환 시
+...
+6. HttpEntityMethodProcessor                  → ResponseEntity 반환 시  ★
+...
+9. RequestResponseBodyMethodProcessor         → @ResponseBody 있을 때   ★
+...
+12. ViewNameMethodReturnValueHandler          → String 반환 시 (뷰 이름)
+14. ModelAttributeMethodProcessor             → 나머지 전부 (모델 속성)
+
+- 이 중 RequestResponseBodyMethodProcessor의 판단 로직은
+`
+public boolean supportsReturnType(MethodParameter returnType) {
+    return (AnnotatedElementUtils.hasAnnotation(
+                returnType.getContainingClass(), ResponseBody.class)
+            || returnType.hasMethodAnnotation(ResponseBody.class));
+}
+`
+
+- 만약 클래스에 @ResponseBody가 있거나, 메서드에 있으면 이 처리기가 집어가고,
+HttpMessageConverter(JSON이면 Jackson)로 직렬화해서 응답 본문에 바로 씀.
+- 만약 @ResponseBody가 없으면 9번이 그냥 넘어가고, 아래쪽 12번 이나 14번까지 흐르는데, 그 쪽은 반환값을 뷰 이름이나 모델 데이터로 해석함.
+
+
+[0-2] RestController 사용 시 결과
+1) 메서드
+`
+@GetMapping("/hello")
+public String hello() {
+    return "checkpoint";
+}
+`
+@RestController인 경우
+
+- RequestResponseBodyMethodProcessor가 처리.
+- StringHttpMessageConverter로 문자열을 그대로 사용.
+
+2) DTO 반환
+`
+@GetMapping
+public CheckpointResponse get() {
+    return new CheckpointResponse(1L, 42L, "ep_03", false, "{}", Instant.now());
+}
+`
+
+- @RestController → Jackson이 JSON으로 직렬화
+`
+{"id":1,"playthroughId":42,"episodeKey":"ep_03", ...}
+`
+
+- 만약 그냥 @Controller로 했다면 어떤 처리기도 명시적으로 안 잡기에,
+맨 아래 ModelAttributeMethodProcessor까지 가고. 뭐든 받아주기에 객체를 모델 속성에 담고, 이름은 URL에서 유추함.
+결과적으로 /playthroughs/42/checkpoint라는 뷰를 찾게 되는데, 이게 원래 URL과 같아서 무한 루프가 됨.
+아래와 같은 에러메시지 출력.
+javax.servlet.ServletException: Circular view path [checkpoint]:
+would dispatch back to the current handler URL again.
+
 
 [1] checkpoint repository 작성 및 응답, 요청 DTO 작성
 
