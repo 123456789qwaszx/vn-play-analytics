@@ -703,3 +703,38 @@ http://localhost:8080/chapters?chapterKey=없는챕터
 ``` 200 OK
 []
 ```
+
+[6]Unity 작업. 조회 추가.
+
+[U1 서버 콘텐츠] 연결 초기화
+server: http://localhost:8080
+첫 장면 진입 대기
+
+[U1 서버 콘텐츠] 조회 시작
+GET http://localhost:8080/chapters?chapterKey=qwer_scene
+UnityEngine.Debug:Log (object)
+
+[U1 서버 콘텐츠]
+local chapterKey: qwer_scene
+HTTP 200
+server chapterId: 1 / title: qwer (장면 묶음 테스트)
+UnityEngine.Debug:Log (object)
+
+- Unity의 실제 콘텐츠 식별자와 서버 DB의 PK가 연결되는 것까지 검증 완료
+
+Unity 실제 progression
+qwer_scene
+    ↓ HTTP
+GET /chapters?chapterKey=qwer_scene
+    ↓
+Spring Controller
+    ↓
+Service
+    ↓
+JPA / MySQL
+    ↓
+chapterId = 1
+    ↓ HTTP Response
+Unity
+
+===
